@@ -82,6 +82,7 @@ setup(
     install_requires=[
         'PyYAML>=3.12',
         'jinja2>=2.9.6',
+        'sh>=1.12.13',
     ],
 
     # List additional groups of dependencies here (e.g. development
