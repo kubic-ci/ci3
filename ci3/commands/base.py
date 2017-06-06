@@ -1,11 +1,16 @@
-import argparse
+"""Base classes for cli."""
+from ci3.error import Ci3Error
 
 
 class CliCommand(object):
     """Base class for cli commands."""
 
     def add_arguments(self, subparser):
-        """(Optional) add cli arguments to the subparser."""
+        """
+        (Optional) Add cli arguments to the subparser.
+
+        Note if you need only first level argument, then don't implement this.
+        """
 
     def run(self, args):
         """Do actual work when running the command."""
@@ -32,4 +37,9 @@ class CommandLineInterface(object):
     def run(self):
         """Run respective command to handle parsed arguments."""
         args = self.parser.parse_args()
-        args.func(args)
+        try:
+            args.func(args)
+        except Ci3Error as error:
+            # Report ci3 errors rather as a message, not stack trace.
+            print(error)
+            exit(1)

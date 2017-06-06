@@ -7,7 +7,11 @@ class GkeCommand(CliCommand):
     """Interface Google Container Engine (GKE) to create k8s clusters."""
 
     def add_arguments(self, subparser):
-        """Add cli arguments to the subparser."""
+        """
+        Add cli arguments to the subparser.
+
+        Note if you need only first level argument, then don't implement it.
+        """
 
     def run(self, args):
         """Execute command."""
