@@ -177,7 +177,7 @@ containers:
 # Place your local (minikube) jinja2 vars here
 ---
 cluster:
-    type: minikube
+  type: minikube
 """.strip())
         # `.ci3/namespace.yaml`
         with open(os.path.join(self.dotci3_path, 'namespace.yaml'), 'w+') as namespace_yaml:

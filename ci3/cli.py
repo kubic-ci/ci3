@@ -5,11 +5,11 @@ See:
     setup.py
 """
 import argparse
-import logging
 
 from ci3.commands.base import CommandLineInterface
 from ci3.commands.dotci3 import StatusCommand, InitCommand, ShowCommand
 from ci3.commands.k8s import ApplyCommand, AccessCommand
+from ci3.commands.dkr import BuildCommand
 from ci3.commands.gke import GkeCommand
 from ci3.version import __version__
 
@@ -34,6 +34,7 @@ def main():
     cli.add_command('show', ShowCommand)
     cli.add_command('apply', ApplyCommand)
     cli.add_command('access', AccessCommand)
+    cli.add_command('build', BuildCommand)
     # TODO: implement
     # cli.add_command('gke', GkeCommand)
 
