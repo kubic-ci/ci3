@@ -197,6 +197,7 @@ metadata:
 # each time when deploy is triggered to update the k8s state from the source code. One should not
 # include here k8s configuration that is required only once, during cluster construction.
 {% include '.ci3/namespace.yaml' %}
+{% include '.ci3/services/web_service.yaml' %}
 """
         with open(self.deploy_path, 'w+') as deploy_yaml:
             deploy_yaml.write(deploy_yaml_header.strip())

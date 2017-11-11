@@ -25,8 +25,8 @@ gcloud auth activate-service-account --key-file {{ cluster.key_path }}
 gcloud container clusters get-credentials {{ cluster.name }} \
 --zone {{ cluster.zone }} --project {{ cluster.project }}
 """.strip()
-        command += "kubectl config set-context $(kubectl config current-context) "
-        command += " --namespace={{ cluster.namespace }} \n"
+        command += "kubectl config set-context %s " % cluster_context
+        command += "--namespace={{ cluster.namespace }} \n"
         return command.strip()
     else:
         kubectl.config('set-context', cluster_context, '--namespace=%s' % cluster_namespace)
@@ -36,7 +36,7 @@ class ApplyCommand(ShowCommand):
     """
     Render and apply k8s configuration from the jinja2 template.
 
-    Use current kubectl context. Make sure to run `source $(kubic access <clustername>)>`.
+    Use current kubectl context. Make sure to run `source <(kubic access <clustername>)>`.
     See also `ci3.dotci3.ShowCommand`.
     """
 
@@ -56,7 +56,7 @@ class AccessCommand(CliCommand, DotCi3Mixin):
     Output shell code to switch between different clusters.
 
     Access switch needs to modify shell ENV. This requires executing
-    `source $(kubic access <clustername>)>`
+    `source <(kubic access <clustername>)>`
     """
 
     def add_arguments(self, subparser):

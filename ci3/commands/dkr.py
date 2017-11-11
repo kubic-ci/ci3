@@ -19,8 +19,8 @@ class BuildCommand(CliCommand, DotCi3Mixin):
         self.load_vars()
         for name in self.config_vars['containers']:
             values = self.config_vars['containers'][name]
-            tag = "{}:{}".format(values['build']['image']['url'],
-                                 values['build']['image']['tag'])
+            tag = "{}:{}".format(values['image']['url'],
+                                 values['image']['tag'])
             try:
                 logger.info('Building %s..' % name)
                 docker.build('-t', tag, '.', _out=sys.stdout, _err=sys.stderr)
