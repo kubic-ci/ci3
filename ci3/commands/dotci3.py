@@ -69,8 +69,8 @@ class DotCi3Mixin(object):
         from sh import git, ErrorReturnCode
         try:
             result = git('rev-parse', '--abbrev-ref', 'HEAD')
-        except ErrorReturnCode:
-            raise Ci3Error("Failed to get the name of the current git branch.")
+        except ErrorReturnCode as error:
+            raise Ci3Error("Failed to get the name of the current git branch: %s" % error)
         name = result.strip()
         # Cutting the non-matching prefix.
         ending = re.search('[a-zA-Z0-9_\-]*$', name)
@@ -94,24 +94,30 @@ class DotCi3Mixin(object):
         if not ('cluster' in self.config_vars and type(self.config_vars['cluster']) == dict):
             self.config_vars['cluster'] = dict()
         # Set cluster namespace
-        self.config_vars['cluster']['namespace'] = self.git_branch_ending()
+        try:
+            self.config_vars['cluster']['namespace'] = self.git_branch_ending()
+        except Ci3Error as error:
+            logger.error(error)
+            self.config_vars['cluster']['namespace'] = 'default'
         # Set cluster name
         if (CI3_CLUSTER_NAME not in os.environ):
             logger.warn('Missing variable CI3_CLUSTER_NAME in ENV. Fallback to local minikube '
                         'cluster. Have you run `kubic access <cluster_name>?`')
             # Run access command to update missing ENV.
             from .k8s import access_cluster
-            access_cluster('minikube', self.config_vars['cluster']['namespace'])
+            access_cluster('minikube', self.config_vars['cluster']['namespace'], echo=True)
         self.config_vars['cluster']['name'] = os.environ[CI3_CLUSTER_NAME]
+        cluster_vars = self.config_vars['cluster']
         # Finally load vars and update config.
         with open(os.path.join(self.cluster_vars_path,
                                self.config_vars['cluster']['name']) + '.yaml') as vars_stream:
             self.config_vars.update(yaml.load(vars_stream))
+        self.config_vars['cluster'].update(cluster_vars)
 
     def load_vars(self):
         """Load vars from `.ci3` project folder."""
         self._load_global_vars()
-
+        self._load_cluster_vars()
 
     def render(self, template_path, template_vars=None):
         """Render jinja2 template, apply template_vars (optional) or `self.config_vars`."""
@@ -155,6 +161,14 @@ class InitCommand(CliCommand, DotCi3Mixin):
             global_vars.write("""
 # Place your global jinja2 vars here, applicable across all clusters.
 # Note that this file will be overwritten by `.ci3/vars/clusters/<cluster.name>.yaml`
+---
+containers:
+  homepage:
+    build:
+      dockerfile: Dockerfile
+      image:
+        url: homepage
+        tag: last
 """.strip())
         # `.ci3/vars/clusters` and `.ci3/vars/clusters/minikube.yaml`
         os.makedirs(self.cluster_vars_path)
@@ -184,8 +198,51 @@ metadata:
 # include here k8s configuration that is required only once, during cluster construction.
 {% include '.ci3/namespace.yaml' %}
 """
-        with open(os.path.join(self.deploy_path), 'w+') as deploy_yaml:
+        with open(self.deploy_path, 'w+') as deploy_yaml:
             deploy_yaml.write(deploy_yaml_header.strip())
+
+        web_service_yaml = """
+# This is an example web-service.
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: homepage
+  namespace: {{ cluster.namespace }}
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: homepage
+        cms: wordpress
+    spec:
+      containers:
+      - name: homepage
+        image: {{ containers.homepage.image_url }}:{{ containers.homepage.image_tag }}
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 80
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: homepage
+  namespace: {{ cluster.namespace }}
+  labels:
+    app: homepage
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: homepage
+"""
+        with open(os.path.join(self.services_path, 'web_service.yaml'), 'w+') as ws:
+            ws.write(web_service_yaml.strip())
 
 
 class ShowCommand(CliCommand, DotCi3Mixin):

@@ -1,6 +1,8 @@
 """Base classes for cli."""
-from ci3.error import Ci3Error
+import sys
 
+from ci3.error import Ci3Error
+from ci3.log import LogConfigurator
 
 class CliCommand(object):
     """Base class for cli commands."""
@@ -38,6 +40,11 @@ class CommandLineInterface(object):
         """Run respective command to handle parsed arguments."""
         args = self.parser.parse_args()
         try:
+            log = LogConfigurator()
+            if 'access' in sys.argv:
+                log.set_console_handler(0)
+            else:
+                log.set_console_handler(args.verbose)
             args.func(args)
         except Ci3Error as error:
             # Report ci3 errors rather as a message, not stack trace.
