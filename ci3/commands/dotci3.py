@@ -166,9 +166,9 @@ containers:
   homepage:
     build:
       dockerfile: Dockerfile
-      image:
-        url: homepage
-        tag: last
+    image:
+      url: homepage
+      tag: last
 """.strip())
         # `.ci3/vars/clusters` and `.ci3/vars/clusters/minikube.yaml`
         os.makedirs(self.cluster_vars_path)
@@ -215,11 +215,10 @@ spec:
     metadata:
       labels:
         app: homepage
-        cms: wordpress
     spec:
       containers:
       - name: homepage
-        image: {{ containers.homepage.image_url }}:{{ containers.homepage.image_tag }}
+        image: {{ containers.homepage.image.url }}:{{ containers.homepage.image.tag }}
         imagePullPolicy: Always
         ports:
           - containerPort: 80
@@ -259,4 +258,5 @@ class ShowCommand(CliCommand, DotCi3Mixin):
         Substitute ci3 vars to do rendering.
         """
         self.load_vars()
+        logger.debug('Config vars: %s' % self.config_vars)
         print(self.render(args.tpl_path))
