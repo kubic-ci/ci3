@@ -80,3 +80,17 @@ class AccessCommand(CliCommand, DotCi3Mixin):
             echo=True))
         self.load_vars()
         print(template.render(self.config_vars))
+
+
+class DeployCommand(CliCommand, DotCi3Mixin):
+    """Deploy CI cycle by applying changed configuration to k8s cluster."""
+
+    def run(self, args):
+        """
+        Apply k8s configuration from the jinja2 template.
+
+        Shorthand to `kubic apply .ci3/deploy.yaml`
+        """
+        self.load_vars()
+        k8s_config = self.render(".ci3/deploy.yaml")
+        kubectl.apply('-f', '-', _in=k8s_config)

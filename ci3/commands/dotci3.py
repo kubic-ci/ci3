@@ -2,7 +2,7 @@
 import os
 import yaml
 import logging
-from jinja2 import Template
+import jinja2
 
 from ci3.error import Ci3Error
 from .base import CliCommand
@@ -121,12 +121,13 @@ class DotCi3Mixin(object):
 
     def render(self, template_path, template_vars=None):
         """Render jinja2 template, apply template_vars (optional) or `self.config_vars`."""
-        if not os.path.exists(template_path):
-            raise IOError('Path does not exists: %s' % template_path)
-        template = Template(open(template_path).read())
+        logger.debug('Path to k8s templates: %s' % self.dotci3_path)
+        env = jinja2.Environment()
+        env.loader = jinja2.FileSystemLoader(self.dotci3_path)
+        template_str = open(template_path).read()
         if not template_vars:
             template_vars = self.config_vars
-        return template.render(template_vars)
+        return env.from_string(template_str).render(template_vars)
 
 
 class StatusCommand(CliCommand, DotCi3Mixin):
@@ -167,7 +168,7 @@ containers:
     build:
       dockerfile: Dockerfile
     image:
-      url: homepage
+      name: homepage
       tag: last
 """.strip())
         # `.ci3/vars/clusters` and `.ci3/vars/clusters/minikube.yaml`
@@ -196,8 +197,8 @@ metadata:
 # Note: this template is used in `kubic show .ci3/deploy.yaml | kubectl apply -f -`, i.e.
 # each time when deploy is triggered to update the k8s state from the source code. One should not
 # include here k8s configuration that is required only once, during cluster construction.
-{% include '.ci3/namespace.yaml' %}
-{% include '.ci3/services/web_service.yaml' %}
+{% include 'namespace.yaml' %}
+{% include 'services/web_service.yaml' %}
 """
         with open(self.deploy_path, 'w+') as deploy_yaml:
             deploy_yaml.write(deploy_yaml_header.strip())
@@ -219,7 +220,7 @@ spec:
     spec:
       containers:
       - name: homepage
-        image: {{ containers.homepage.image.url }}:{{ containers.homepage.image.tag }}
+        image: "{{ cluster.image_registry_url }}/{{ containers.homepage.image.name }}:{{ containers.homepage.image.tag }}"
         imagePullPolicy: Always
         ports:
           - containerPort: 80
