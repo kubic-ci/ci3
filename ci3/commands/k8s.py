@@ -25,6 +25,8 @@ gcloud auth activate-service-account --key-file {{ cluster.key_path }}
 gcloud container clusters get-credentials {{ cluster.name }} \
 --zone {{ cluster.zone }} --project {{ cluster.project }}
 """.strip()
+        elif cluster_type == 'minikube':
+            command += "eval $(minikube docker-env) \n"
         command += "kubectl config set-context %s " % cluster_context
         command += "--namespace={{ cluster.namespace }} \n"
         return command.strip()
