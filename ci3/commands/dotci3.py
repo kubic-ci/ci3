@@ -220,12 +220,24 @@ spec:
       labels:
         app: homepage
     spec:
+      {% if cluster.type == 'minikube' %}
+      volumes:
+        - name: code-volume
+          hostPath:
+            path: '{{ env.PWD }}'
+      {% endif %}
       containers:
-      - name: homepage
-        image: "{{ cluster.image_registry_url }}/{{ containers.homepage.image.name }}:{{ containers.homepage.image.tag }}"
-        imagePullPolicy: Always
-        ports:
-          - containerPort: 80
+        - name: homepage
+          image: {{ cluster.image_registry_url }}/{{ containers.homepage.image.name }}:{{ containers.homepage.image.tag }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          {% if cluster.type == 'minikube' %}
+          volumeMounts:
+            - mountPath: '/opt/homepage'
+              name: code-volume
+          {% endif %}
+      restartPolicy: Always
 ---
 kind: Service
 apiVersion: v1
@@ -235,7 +247,12 @@ metadata:
   labels:
     app: homepage
 spec:
+  {% if cluster.type == 'minikube' %}
   type: NodePort
+  {% else %}
+  type: LoadBalancer
+  loadBalancerIP: {{ cluster.external_ips.homepage }}
+  {% endif %}
   ports:
   - name: http
     port: 80
