@@ -118,6 +118,8 @@ class DotCi3Mixin(object):
         """Load vars from `.ci3` project folder."""
         self._load_global_vars()
         self._load_cluster_vars()
+        # add ENV vars
+        self.config_vars['env'] = os.environ
 
     def render(self, template_path, template_vars=None):
         """Render jinja2 template, apply template_vars (optional) or `self.config_vars`."""
