@@ -6,7 +6,7 @@ See:
 """
 import argparse
 
-from ci3.commands.base import CommandLineInterface
+from ci3.commands.base import CommandLineInterface, CliCommand
 from ci3.commands.dotci3 import StatusCommand, InitCommand, ShowCommand
 from ci3.commands.k8s import ApplyCommand, AccessCommand, DeployCommand
 from ci3.commands.dkr import BuildCommand, PushCommand
@@ -16,6 +16,16 @@ from ci3.version import __version__
 
 BOX = u'\u2B1C'
 PROMPT = u'{box}: kubic CI {version}'.format(box=BOX, version=__version__)
+
+
+class RedoCommand(CliCommand):
+    """Shorthand for `kubic build && kubic push && kubic deploy`."""
+
+    def run(self, args):
+        """Chain three commands."""
+        BuildCommand().run(args)
+        PushCommand().run(args)
+        DeployCommand().run(args)
 
 
 def main():
@@ -37,6 +47,7 @@ def main():
     cli.add_command('build', BuildCommand)
     cli.add_command('push', PushCommand)
     cli.add_command('deploy', DeployCommand)
+    cli.add_command('redo', RedoCommand)
     # TODO: implement
     # cli.add_command('gke', GkeCommand)
 
