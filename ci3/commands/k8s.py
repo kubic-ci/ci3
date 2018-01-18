@@ -96,3 +96,10 @@ class DeployCommand(CliCommand, DotCi3Mixin):
         self.load_vars()
         k8s_config = self.render(".ci3/deploy.yaml")
         kubectl.apply('-f', '-', _in=k8s_config)
+
+        # Always patch deployment
+        # image_name
+        # image_url
+        # sha1
+        # kubectl.patch('deployment', image_name, '-p',
+        # '{"spec":{"template":{"spec":{"containers":[{"name":"'"%s"'","image":"'"%s"':'""'"}]}}}}'

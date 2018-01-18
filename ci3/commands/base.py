@@ -4,6 +4,7 @@ import sys
 from ci3.error import Ci3Error
 from ci3.log import LogConfigurator
 
+
 class CliCommand(object):
     """Base class for cli commands."""
 
@@ -45,6 +46,8 @@ class CommandLineInterface(object):
                 log.set_console_handler(0)
             else:
                 log.set_console_handler(args.verbose)
+            if not getattr(args, 'func', None):
+                raise Ci3Error("Unknown command. See kubic -h for help")
             args.func(args)
         except Ci3Error as error:
             # Report ci3 errors rather as a message, not stack trace.

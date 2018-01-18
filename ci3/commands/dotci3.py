@@ -79,6 +79,16 @@ class DotCi3Mixin(object):
                            "underscore, minus")
         return ending.group()
 
+    @staticmethod
+    def get_head_sha():
+        """Get SHA1 of the local git HEAD."""
+        from sh import git, ErrorReturnCode
+        try:
+            result = git('rev-parse', 'HEAD')
+        except ErrorReturnCode as error:
+            raise Ci3Error("Failed to get SHA1 of the local git HEAD: %s" % error)
+        return result.strip()
+
     def _load_global_vars(self):
         """Load global vars from `.ci3` project folder."""
         global_vars_path = os.path.join(self.vars_path, 'global.yaml')
