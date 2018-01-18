@@ -36,6 +36,11 @@ class BuildCommand(CliCommand, DotCi3Mixin):
 class PushCommand(CliCommand, DotCi3Mixin):
     """Push container images to docker registry."""
 
+    def _push(self, tag):
+        logger.info('Pushing %s..' % tag)
+        docker.push(tag, _out=sys.stdout, _err=sys.stderr)
+        logger.info('Done')
+
     def run(self, args):
         """Call docker to push image."""
         self.load_vars()
@@ -47,9 +52,7 @@ class PushCommand(CliCommand, DotCi3Mixin):
                 values['image']['name'],
                 values['image']['tag'])
             try:
-                logger.info('Pushing %s..' % tag)
-                docker.push(tag, _out=sys.stdout, _err=sys.stderr)
-                logger.info('Done')
+                self._push(tag)
             except ErrorReturnCode as error:
                 raise Ci3Error("Failed to push docker image `{}`: {}"
                                .format(tag, error))
