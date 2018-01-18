@@ -12,8 +12,8 @@ def access_cluster(cluster_name, cluster_namespace='default',
                    cluster_type='minikube', echo=False):
     """Access cluster by name, type."""
     if (CI3_CLUSTER_NAME not in os.environ):
-        raise Ci3Error('Missing variable CI3_CLUSTER_NAME in ENV. Fallback to local minikube '
-                       'cluster. Have you run `kubic access <cluster_name>?`')
+        raise Ci3Error('Missing variable CI3_CLUSTER_NAME in ENV. '
+                       'Have you run `kubic access <cluster_name>?`')
     if cluster_type == 'minikube':
         cluster_context = 'minikube'
     else:

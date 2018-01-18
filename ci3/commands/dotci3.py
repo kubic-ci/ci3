@@ -118,8 +118,13 @@ class DotCi3Mixin(object):
             self.config_vars.update(yaml.load(vars_stream))
         self.config_vars['cluster'].update(cluster_vars)
 
-    def load_vars(self, cluster_name='minikube'):
+    def load_vars(self, cluster_name=None):
         """Load vars from `.ci3` project folder."""
+        if not cluster_name:
+            if (CI3_CLUSTER_NAME not in os.environ):
+                raise Ci3Error('Missing variable CI3_CLUSTER_NAME in ENV. '
+                               'Have you run `kubic access <cluster_name>?`')
+            cluster_name = os.environ[CI3_CLUSTER_NAME]
         self._load_global_vars()
         self._load_cluster_vars(cluster_name)
         # add ENV vars
