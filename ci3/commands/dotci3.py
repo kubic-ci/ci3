@@ -99,7 +99,7 @@ class DotCi3Mixin(object):
         if self.config_vars is None:
             self.config_vars = {}
 
-    def _load_cluster_vars(self):
+    def _load_cluster_vars(self, cluster_name):
         """Load cluster specific vars, overwrite global values."""
         if not ('cluster' in self.config_vars and type(self.config_vars['cluster']) == dict):
             self.config_vars['cluster'] = dict()
@@ -110,13 +110,7 @@ class DotCi3Mixin(object):
             logger.error(error)
             self.config_vars['cluster']['namespace'] = 'default'
         # Set cluster name
-        if (CI3_CLUSTER_NAME not in os.environ):
-            logger.warn('Missing variable CI3_CLUSTER_NAME in ENV. Fallback to local minikube '
-                        'cluster. Have you run `kubic access <cluster_name>?`')
-            # Run access command to update missing ENV.
-            from .k8s import access_cluster
-            access_cluster('minikube', self.config_vars['cluster']['namespace'], echo=True)
-        self.config_vars['cluster']['name'] = os.environ[CI3_CLUSTER_NAME]
+        self.config_vars['cluster']['name'] = cluster_name
         cluster_vars = self.config_vars['cluster']
         # Finally load vars and update config.
         with open(os.path.join(self.cluster_vars_path,
@@ -124,10 +118,10 @@ class DotCi3Mixin(object):
             self.config_vars.update(yaml.load(vars_stream))
         self.config_vars['cluster'].update(cluster_vars)
 
-    def load_vars(self):
+    def load_vars(self, cluster_name='minikube'):
         """Load vars from `.ci3` project folder."""
         self._load_global_vars()
-        self._load_cluster_vars()
+        self._load_cluster_vars(cluster_name)
         # add ENV vars
         self.config_vars['env'] = os.environ
 

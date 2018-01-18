@@ -11,11 +11,13 @@ from .dotci3 import DotCi3Mixin, ShowCommand, CI3_CLUSTER_NAME
 def access_cluster(cluster_name, cluster_namespace='default',
                    cluster_type='minikube', echo=False):
     """Access cluster by name, type."""
-    os.environ['CI3_CLUSTER_NAME'] = cluster_name
-    if cluster_name == 'minikube':
+    if (CI3_CLUSTER_NAME not in os.environ):
+        raise Ci3Error('Missing variable CI3_CLUSTER_NAME in ENV. Fallback to local minikube '
+                       'cluster. Have you run `kubic access <cluster_name>?`')
+    if cluster_type == 'minikube':
         cluster_context = 'minikube'
     else:
-        cluster_context = kubectl.config('current-context')
+        cluster_context = "$( kubectl config 'current-context' )"
     if echo:
         command = "export CI3_CLUSTER_NAME={{ cluster.name }}\n"
         if cluster_type == 'gke':
@@ -24,7 +26,7 @@ export CLOUDSDK_CONTAINER_USE_CLIENT_CERTIFICATE=True
 gcloud auth activate-service-account --key-file {{ cluster.key_path }}
 gcloud container clusters get-credentials {{ cluster.name }} \
 --zone {{ cluster.zone }} --project {{ cluster.project }}
-""".strip()
+""".strip() + "\n"
         elif cluster_type == 'minikube':
             command += "eval $(minikube docker-env) \n"
         command += "kubectl config set-context %s " % cluster_context
@@ -64,8 +66,6 @@ class AccessCommand(CliCommand, DotCi3Mixin):
     def add_arguments(self, subparser):
         """Add cli arguments to command subparser."""
         subparser.add_argument('cluster_name', help="Name of the cluster")
-        subparser.add_argument('-t', '--type', default='minikube',
-                               help="Cluster type {minikube, gke, aws}")
         subparser.add_argument('-n', '--namespace', default='default',
                                help="Cluster namespace")
 
@@ -73,14 +73,15 @@ class AccessCommand(CliCommand, DotCi3Mixin):
         """
         Apply k8s configuration from the jinja2 template.
 
-        Rednder template with substituted ci3 vars. Pass k8s configuration to `kubectl`.
+        Render template with substituted ci3 vars. Pass k8s configuration to `kubectl`.
         """
+        self.load_vars(args.cluster_name)
+        os.environ[CI3_CLUSTER_NAME] = args.cluster_name
         template = Template(access_cluster(
             cluster_name=args.cluster_name,
             cluster_namespace=args.namespace,
-            cluster_type=args.type,
+            cluster_type=self.config_vars['cluster']['type'],
             echo=True))
-        self.load_vars()
         print(template.render(self.config_vars))
 
 
