@@ -38,7 +38,11 @@ class PushCommand(CliCommand, DotCi3Mixin):
 
     def _push(self, tag):
         logger.info('Pushing %s..' % tag)
-        docker.push(tag, _out=sys.stdout, _err=sys.stderr)
+        if self.config_vars['cluster']['type'] == 'gke':
+            from .gke import push_image
+            push_image(tag)
+        else:
+            docker.push(tag, _out=sys.stdout, _err=sys.stderr)
         logger.info('Done')
 
     def run(self, args):

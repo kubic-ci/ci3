@@ -1,6 +1,12 @@
 """Google Container Engine (GKE) cli command."""
+import sys
 from sh import ErrorReturnCode, gcloud
 from .base import CliCommand
+
+
+def push_image(tag):
+    """Push docker image via gcloud context to resolve permission issues."""
+    gcloud.docker('--', 'push', tag, _out=sys.stdout, _err=sys.stderr)
 
 
 class GkeCommand(CliCommand):
