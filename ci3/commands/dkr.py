@@ -56,7 +56,14 @@ class PushCommand(CliCommand, DotCi3Mixin):
                 values['image']['name'],
                 values['image']['tag'])
             try:
-                self._push(tag)
+                # Tag with git sha
+                tag_sha = "{}/{}:{}".format(
+                    image_registry_url,
+                    values['image']['name'],
+                    'commit-' + self.get_head_sha())
+                docker.tag(tag, tag_sha, _out=sys.stdout, _err=sys.stderr)
+                # .. and then push
+                self._push(tag_sha)
             except ErrorReturnCode as error:
                 raise Ci3Error("Failed to push docker image `{}`: {}"
                                .format(tag, error))

@@ -1,11 +1,16 @@
 """More advanced ci3 commands that interact with `kubectl`."""
 import os
+import json
+import logging
 from sh import kubectl
 from jinja2 import Template
 
 from ci3.error import Ci3Error
 from .base import CliCommand
 from .dotci3 import DotCi3Mixin, ShowCommand, CI3_CLUSTER_NAME
+
+
+logger = logging.getLogger(__name__)
 
 
 def access_cluster(cluster_name, cluster_namespace='default',
@@ -88,6 +93,35 @@ class AccessCommand(CliCommand, DotCi3Mixin):
 class DeployCommand(CliCommand, DotCi3Mixin):
     """Deploy CI cycle by applying changed configuration to k8s cluster."""
 
+    def add_arguments(self, subparser):
+        """Add cli arguments to command subparser."""
+        subparser.add_argument('-d', '--deployment', default='default',
+                               help="Name of k8s deployment to patch with built container tag.")
+
+    def _patch_deployment(self, name):
+        """Get tag id of last container build and patch deployment."""
+        values = self.config_vars['containers'][name]
+        image_registry_url = self.config_vars['cluster']['image_registry_url']
+        # We expect that actually this tag with git sha is already pushed to remote repository.
+        tag_sha = "{}/{}:{}".format(
+            image_registry_url,
+            values['image']['name'],
+            'commit-' + self.get_head_sha())
+        # Actual patching
+        payload = {
+            "spec": {
+                "template": {
+                    "spec": {
+                        "containers": [{
+                            "name": name,
+                            "image": tag_sha,
+                        }],
+                    },
+                },
+            },
+        }
+        kubectl.patch('deployment', name, '-p', json.dumps(payload))
+
     def run(self, args):
         """
         Apply k8s configuration from the jinja2 template.
@@ -99,8 +133,9 @@ class DeployCommand(CliCommand, DotCi3Mixin):
         kubectl.apply('-f', '-', _in=k8s_config)
 
         # Always patch deployment
-        # image_name
-        # image_url
-        # sha1
-        # kubectl.patch('deployment', image_name, '-p',
-        # '{"spec":{"template":{"spec":{"containers":[{"name":"'"%s"'","image":"'"%s"':'""'"}]}}}}'
+        if not args.deployment:
+            logging.info('Not patching any containers')
+        else:
+            if args.deployment not in self.config_vars['containers']:
+                raise Ci3Error("Container not found: %s", args.deployment)
+            self._patch_deployment(args.deployment)
