@@ -95,7 +95,7 @@ class DeployCommand(CliCommand, DotCi3Mixin):
 
     def add_arguments(self, subparser):
         """Add cli arguments to command subparser."""
-        subparser.add_argument('-d', '--deployment', default='default',
+        subparser.add_argument('-d', '--deployment',
                                help="Name of k8s deployment to patch with built container tag.")
 
     def _patch_deployment(self, name):
