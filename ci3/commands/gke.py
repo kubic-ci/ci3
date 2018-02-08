@@ -9,6 +9,12 @@ def push_image(tag):
     gcloud.docker('--', 'push', tag, _out=sys.stdout, _err=sys.stderr)
 
 
+def tag_container(existing_tag, new_tag):
+    """Add tag to a remote container image via gcloud."""
+    gcloud.container('images', 'add-tag', existing_tag, new_tag, '--quiet',
+                     _out=sys.stdout, _err=sys.stderr)
+
+
 class GkeCommand(CliCommand):
     """Interface Google Container Engine (GKE) to create k8s clusters."""
 

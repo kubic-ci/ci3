@@ -46,6 +46,13 @@ class PushCommand(CliCommand, DotCi3Mixin):
             docker.push(tag, _out=sys.stdout, _err=sys.stderr)
         logger.info('Done')
 
+    def _tag_remote(self, exising_tag, new_tag):
+        if self.config_vars['cluster']['type'] == 'gke':
+            from .gke import tag_container
+            logger.info('Adding tag %s..' % new_tag)
+            tag_container(exising_tag, new_tag)
+            logger.info('Done')
+
     def run(self, args):
         """Call docker to push image."""
         self.load_vars()
@@ -66,6 +73,7 @@ class PushCommand(CliCommand, DotCi3Mixin):
                 docker.tag(tag, tag_sha, _out=sys.stdout, _err=sys.stderr)
                 # .. and then push
                 self._push(tag_sha)
+                self._tag_remote(tag_sha, tag)
             except ErrorReturnCode as error:
                 raise Ci3Error("Failed to push docker image `{}`: {}"
                                .format(tag, error))
