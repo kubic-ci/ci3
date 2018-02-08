@@ -20,10 +20,11 @@ class BuildCommand(CliCommand, DotCi3Mixin):
         for name in self.config_vars['containers']:
             values = self.config_vars['containers'][name]
             image_registry_url = self.config_vars['cluster']['image_registry_url']
+            # Tag with branch name.
             tag = "{}/{}:{}".format(
                 image_registry_url,
                 values['image']['name'],
-                values['image']['tag'])
+                self.git_branch_ending())
             try:
                 logger.info('Building %s..' % name)
                 docker.build('-t', tag, '.', _out=sys.stdout, _err=sys.stderr)
@@ -51,10 +52,11 @@ class PushCommand(CliCommand, DotCi3Mixin):
         for name in self.config_vars['containers']:
             values = self.config_vars['containers'][name]
             image_registry_url = self.config_vars['cluster']['image_registry_url']
+            # Tag with branch name.
             tag = "{}/{}:{}".format(
                 image_registry_url,
                 values['image']['name'],
-                values['image']['tag'])
+                self.git_branch_ending())
             try:
                 # Tag with git sha
                 tag_sha = "{}/{}:{}".format(
