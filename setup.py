@@ -25,7 +25,6 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 with open(path.join(here, 'ci3', 'version.py'), encoding='utf-8') as f:
     version = re.sub('\'', '', f.read().split('=')[1].strip())
 
-print(version)
 
 setup(
     name='kubic-ci',
