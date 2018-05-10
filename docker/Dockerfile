@@ -5,7 +5,7 @@ MAINTAINER eugeny.yakimovitch@gmail.com
 # Prepare the image
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install -y -qq --no-install-recommends \
-	wget unzip openssh-client screen curl vim sudo python python-openssl \
+	git wget unzip openssh-client screen curl vim sudo python python-openssl \
 	&& apt-get clean
 
 # Install the Google Cloud SDK.
