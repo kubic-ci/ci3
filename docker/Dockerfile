@@ -25,10 +25,10 @@ RUN mkdir /.ssh
 ENV PATH /google-cloud-sdk/bin:$PATH
 
 
-# Update python packages. Install latest version of kubic CI and etc deps. 
+# Update python packages. 
 RUN apt-get install python-setuptools \
 	&& easy_install pip \
-	&& pip install codecov==2.0.5 shyaml==0.5.0 kubic-ci
+	&& pip install codecov==2.0.5 shyaml==0.5.0
 
 
 # Install exact versions of docker (ce and docker-compose)
@@ -49,6 +49,9 @@ RUN curl -sL https://deb.nodesource.com/setup_9.x | sudo -E bash - && \
 	npm install -g npm@5.6.0 && \
 	npm install -g yarn@1.6.0 && \
 	npm install -g webpack@3.1.0
+
+# Install latest pinned version of kubic CI.
+RUN pip install kubic-ci==0.1.4
 
 
 # Good default for testing
