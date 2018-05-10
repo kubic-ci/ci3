@@ -1,5 +1,6 @@
 """Basic Cli commands to interact with the content of `.ci3` folder."""
 import os
+import re
 import yaml
 import logging
 import jinja2
@@ -65,13 +66,17 @@ class DotCi3Mixin(object):
         Pick the postfix ending matching [alphanumerical, "_", "-"]. Function strictly cuts any
         prefix that does not match those criteria. E.g. "feature/foo-bar" -> "-feat"
         """
-        import re
-        from sh import git, ErrorReturnCode
-        try:
-            result = git('rev-parse', '--abbrev-ref', 'HEAD')
-        except ErrorReturnCode as error:
-            raise Ci3Error("Failed to get the name of the current git branch: %s" % error)
-        name = result.strip()
+        if 'CI_COMMIT_REF_NAME' in os.environ:
+            # We are inside gitlab-runner, so branches are not checkout.
+            # Solution is to pick the name for them ENV variable.
+            name = os.environ['CI_COMMIT_REF_NAME'].strip()
+        else:
+            from sh import git, ErrorReturnCode
+            try:
+                result = git('rev-parse', '--abbrev-ref', 'HEAD')
+            except ErrorReturnCode as error:
+                raise Ci3Error("Failed to get the name of the current git branch: %s" % error)
+            name = result.strip()
         # Cutting the non-matching prefix.
         ending = re.search('[a-zA-Z0-9_\-]*$', name)
         if ending is None:
